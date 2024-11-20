@@ -1,4 +1,5 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import axios from 'axios';
 
 function App() {
   const [formData, setFormData] = useState({
@@ -14,6 +15,16 @@ function App() {
 
   const categories = ['Tecnologia', 'Sport', 'Salute', 'Moda', 'Cucina'];
   const availableTags = ['React', 'JavaScript', 'CSS', 'HTML', 'Node.js'];
+
+  useEffect(() => {
+    axios.get('http://localhost:5000/api/posts')
+      .then((response) => {
+        setArticles(response.data);
+      })
+      .catch((error) => {
+        console.error('Errore durante il recupero degli articoli:', error);
+      });
+  }, []);
 
   const handleChange = (e) => {
     const { name, value, type, checked } = e.target;
@@ -39,7 +50,13 @@ function App() {
 
     if (formData.title.trim() === '') return;
 
-    setArticles((prevArticles) => [...prevArticles, formData]);
+    axios.post('http://localhost:5000/api/posts', formData)
+      .then((response) => {
+        setArticles((prevArticles) => [...prevArticles, response.data]);
+      })
+      .catch((error) => {
+        console.error('Errore durante l\'aggiunta dell\'articolo:', error);
+      });
 
     setFormData({
       title: '',
@@ -52,15 +69,22 @@ function App() {
   };
 
   const handleDelete = (index) => {
-    const newArticles = articles.filter((_, i) => i !== index);
-    setArticles(newArticles);
+    const articleToDelete = articles[index];
+
+    axios.delete(`http://localhost:5000/api/posts/${articleToDelete.id}`)
+      .then(() => {
+        const newArticles = articles.filter((_, i) => i !== index);
+        setArticles(newArticles);
+      })
+      .catch((error) => {
+        console.error('Errore durante l\'eliminazione dell\'articolo:', error);
+      });
   };
 
   return (
     <div>
       <h1>Blog Form</h1>
       <form onSubmit={handleSubmit}>
-        {/* Titolo */}
         <div>
           <label htmlFor="title">Titolo dell'articolo:</label>
           <input
@@ -72,7 +96,6 @@ function App() {
           />
         </div>
 
-        {}
         <div>
           <label htmlFor="image">URL Immagine:</label>
           <input
@@ -84,7 +107,6 @@ function App() {
           />
         </div>
 
-        {}
         <div>
           <label htmlFor="content">Contenuto dell'articolo:</label>
           <textarea
@@ -95,7 +117,6 @@ function App() {
           />
         </div>
 
-        {}
         <div>
           <label htmlFor="category">Categoria:</label>
           <select
@@ -113,7 +134,6 @@ function App() {
           </select>
         </div>
 
-        {}
         <div>
           <label>Tags:</label>
           {availableTags.map((tag) => (
@@ -131,7 +151,6 @@ function App() {
           ))}
         </div>
 
-        {}
         <div>
           <label htmlFor="isPublished">Pubblica l'articolo:</label>
           <input
